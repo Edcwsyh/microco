@@ -3,6 +3,16 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+JQ="${SCRIPT_DIR}/jq"
+JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux64"
+
+if [[ ! -x "$JQ" ]]; then
+    echo "Downloading jq..."
+    curl -fsSL -o "$JQ" "$JQ_URL"
+    chmod +x "$JQ"
+    echo "  [OK] jq installed to ${JQ}"
+fi
+
 OPENCODE_CONFIG_DIR="${HOME}/.config/opencode"
 AGENTS_DIR="${OPENCODE_CONFIG_DIR}/agents"
 MICROCO_AGENTS_DIR="${SCRIPT_DIR}/../agents"
@@ -51,6 +61,46 @@ convert_agent "coder" "Coder - Code implementation per development plans"
 convert_agent "ops" "Ops - Environment setup and scripting"
 convert_agent "qa" "QA - Testing and quality assurance"
 convert_agent "reviewer" "Code Reviewer - Code quality review and improvement suggestions"
+
+echo ""
+echo "Creating/updating opencode.json configuration..."
+
+OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-${OPENCODE_CONFIG_DIR}/opencode.json}"
+
+MICROCO_PM_CONFIG=$(cat << 'EOF'
+{
+  "agent": {
+    "microco-pm": {
+      "mode": "primary",
+      "permission": {
+        "task": {
+          "microco-coder": "allow",
+          "microco-ops": "allow",
+          "microco-qa": "allow",
+          "microco-planner": "allow",
+          "microco-architect": "allow",
+          "microco-reviewer": "allow"
+        }
+      }
+    }
+  }
+}
+EOF
+)
+
+if [[ -f "$OPENCODE_CONFIG_FILE" ]]; then
+    backup_file="${OPENCODE_CONFIG_FILE}.bak"
+    cp "$OPENCODE_CONFIG_FILE" "$backup_file"
+    echo "  [INFO] Backed up to ${backup_file}"
+
+    "$JQ" -s '.[0] * .[1]' "$OPENCODE_CONFIG_FILE" <<< "$MICROCO_PM_CONFIG" > "${OPENCODE_CONFIG_FILE}.tmp"
+    mv "${OPENCODE_CONFIG_FILE}.tmp" "$OPENCODE_CONFIG_FILE"
+    echo "  [OK] Merged microco-pm config into ${OPENCODE_CONFIG_FILE}"
+else
+    mkdir -p "$(dirname "$OPENCODE_CONFIG_FILE")"
+    echo "$MICROCO_PM_CONFIG" > "$OPENCODE_CONFIG_FILE"
+    echo "  [OK] Created ${OPENCODE_CONFIG_FILE}"
+fi
 
 echo ""
 echo "Installation complete!"
