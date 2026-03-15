@@ -120,15 +120,18 @@ npm run typecheck
 3. **Architect** outputs `./docs/arch_overview.md` → user confirms → **Ops** starts env setup in parallel with **Architect** creating plan files
 4. **Coder** receives plan files → writes code to `./src/` → self-tests → reports to PM
 5. **PM** assigns to **Reviewer** → Reviewer reviews code → outputs `./docs/review_notes.md` → reports to PM
-6. **PM** assigns to **QA** → QA writes tests, verifies, reports to PM
-7. **PM** delivers to user
+6. **PM** coordinates **Secretary** to update progress log → Secretary checks compliance → tells PM next step
+7. **PM** sends submit request with review file list to **Ops** → **Ops** gate check → execute git commit
+8. **PM** assigns to **QA** → QA writes tests, verifies, reports to PM
+9. **PM** delivers to user
 
 ### Agent Constraints
-- **PM**: No code, no technical docs, only information routing
+- **PM**: No code, no technical docs, only information routing, no Write/Edit/Bash tools
+- **Secretary**: Progress doc management, compliance check, no code writing
 - **Planner**: No technical feasibility assessment
 - **Architect**: No implementation code, only design
 - **Coder**: No env setup, follows plan files exactly
-- **Ops**: No business code, only infrastructure scripts
+- **Ops**: No business code, only infrastructure scripts and git commit gate check
 - **QA**: No code modification, only testing and reporting
 - **Reviewer**: No code modification, only reviewing and reporting
 
