@@ -3,17 +3,37 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# 安装模式选择
+echo "请选择安装模式："
+echo "1) 全局安装 (~/.config/opencode/)"
+echo "2) 当前目录安装 (./.opencode/)"
+read -p "请输入选项 [1]: " install_mode
+
+case "$install_mode" in
+    2)
+        OPENCODE_CONFIG_DIR="$(pwd)/.opencode"
+        ;;
+    *)
+        OPENCODE_CONFIG_DIR="${HOME}/.config/opencode"
+        ;;
+esac
+
+echo "安装目录: ${OPENCODE_CONFIG_DIR}"
+echo ""
+
 JQ="${SCRIPT_DIR}/jq"
 JQ_URL="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux64"
+JQ_SHA256="5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5"
 
 if [[ ! -x "$JQ" ]]; then
     echo "Downloading jq..."
     curl -fsSL -o "$JQ" "$JQ_URL"
+    echo "${JQ_SHA256}  $JQ" | sha256sum -c - || { rm -f "$JQ"; exit 1; }
     chmod +x "$JQ"
     echo "  [OK] jq installed to ${JQ}"
 fi
 
-OPENCODE_CONFIG_DIR="${HOME}/.config/opencode"
 AGENTS_DIR="${OPENCODE_CONFIG_DIR}/agents"
 MICROCO_AGENTS_DIR="${SCRIPT_DIR}/../agents"
 
@@ -68,12 +88,12 @@ echo "Creating/updating opencode.json configuration..."
 
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-${OPENCODE_CONFIG_DIR}/opencode.json}"
 
-MICROCO_AGENTS_CONFIG=$(cat << 'EOF'
+MICROCO_AGENTS_CONFIG=$(cat << EOF
 {
   "agent": {
     "microco-pm": {
       "mode": "primary",
-      "prompt": "{file:~/.config/opencode/agents/microco-pm.md}",
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-pm.md}",
       "permission": {
         "task": {
           "microco-coder": "allow",
@@ -87,27 +107,27 @@ MICROCO_AGENTS_CONFIG=$(cat << 'EOF'
     },
     "microco-planner": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-planner.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-planner.md}"
     },
     "microco-architect": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-architect.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-architect.md}"
     },
     "microco-coder": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-coder.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-coder.md}"
     },
     "microco-ops": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-ops.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-ops.md}"
     },
     "microco-qa": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-qa.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-qa.md}"
     },
     "microco-reviewer": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-reviewer.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-reviewer.md}"
     }
   }
 }
@@ -115,7 +135,7 @@ EOF
 )
 
 if [[ -f "$OPENCODE_CONFIG_FILE" ]]; then
-    backup_file="${OPENCODE_CONFIG_FILE}.bak"
+    backup_file="${OPENCODE_CONFIG_DIR}/opencode.json.bak"
     cp "$OPENCODE_CONFIG_FILE" "$backup_file"
     echo "  [INFO] Backed up to ${backup_file}"
 
@@ -135,36 +155,36 @@ echo "Usage:"
 echo "  Open OpenCode and use @microco-pm to invoke the PM agent"
 echo "  Or add agents to your opencode.json:"
 echo ""
-cat << 'EOF'
+cat << EOF
 {
   "agent": {
     "microco-pm": {
       "mode": "primary",
-      "prompt": "{file:~/.config/opencode/agents/microco-pm.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-pm.md}"
     },
     "microco-planner": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-planner.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-planner.md}"
     },
     "microco-architect": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-architect.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-architect.md}"
     },
     "microco-coder": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-coder.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-coder.md}"
     },
     "microco-ops": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-ops.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-ops.md}"
     },
     "microco-qa": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-qa.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-qa.md}"
     },
     "microco-reviewer": {
       "mode": "subagent",
-      "prompt": "{file:~/.config/opencode/agents/microco-reviewer.md}"
+      "prompt": "{file:${OPENCODE_CONFIG_DIR}/agents/microco-reviewer.md}"
     }
   }
 }
