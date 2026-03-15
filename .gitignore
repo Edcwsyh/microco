@@ -1,4 +1,5 @@
 # jq binary
+scripts/jq
 
 # Local opencode installation
 .opencode/
