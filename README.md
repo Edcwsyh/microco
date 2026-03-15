@@ -11,12 +11,13 @@
 | microco-architect | 主程 | 技术评估、架构设计、开发计划拆分 |
 | microco-coder | 程序 | 按开发计划编写代码 |
 | microco-ops | 运维 | 环境配置、脚本编写 |
+| microco-reviewer | Reviewer | 代码审查、质量评估、问题反馈 |
 | microco-qa | QA | 编写测试用例、验收代码质量 |
 
 ## 协作流程
 
 ```
-用户 → PM → 策划 → [用户审核] → 主程 → [用户审核] → 运维+主程(并行) → 程序 → QA → 交付
+用户 → PM → 策划 → [用户审核] → 主程 → [用户审核] → 运维+主程(并行) → 程序 → Reviewer → QA → 交付
 ```
 
 ## 使用方法
@@ -29,6 +30,7 @@ agents/
 ├── planner/prompt.txt     # 策划 agent
 ├── architect/prompt.txt  # 主程 agent
 ├── coder/prompt.txt       # 程序 agent
+├── reviewer/prompt.txt    # Reviewer agent
 ├── ops/prompt.txt         # 运维 agent
 └── qa/prompt.txt          # QA agent
 ```
