@@ -24,6 +24,7 @@ mkdir -p "${AGENTS_DIR}"
 convert_agent() {
     local name="$1"
     local description="$2"
+    local mode="$3"
     local in_file="${MICROCO_AGENTS_DIR}/${name}/prompt.txt"
     local out_file="${AGENTS_DIR}/microco-${name}.md"
     
@@ -35,7 +36,7 @@ convert_agent() {
     cat > "$out_file" << EOF
 ---
 description: ${description}
-mode: primary
+mode: ${mode}
 tools:
   write: true
   edit: true
@@ -54,24 +55,25 @@ EOF
 
 echo ""
 echo "Creating agents..."
-convert_agent "pm" "Project Manager - Task scheduling and information routing"
-convert_agent "planner" "Planner - Requirements analysis and documentation"
-convert_agent "architect" "Architect - Technical evaluation and architecture design"
-convert_agent "coder" "Coder - Code implementation per development plans"
-convert_agent "ops" "Ops - Environment setup and scripting"
-convert_agent "qa" "QA - Testing and quality assurance"
-convert_agent "reviewer" "Code Reviewer - Code quality review and improvement suggestions"
+convert_agent "pm" "Project Manager - Task scheduling and information routing" "primary"
+convert_agent "planner" "Planner - Requirements analysis and documentation" "subagent"
+convert_agent "architect" "Architect - Technical evaluation and architecture design" "subagent"
+convert_agent "coder" "Coder - Code implementation per development plans" "subagent"
+convert_agent "ops" "Ops - Environment setup and scripting" "subagent"
+convert_agent "qa" "QA - Testing and quality assurance" "subagent"
+convert_agent "reviewer" "Code Reviewer - Code quality review and improvement suggestions" "subagent"
 
 echo ""
 echo "Creating/updating opencode.json configuration..."
 
 OPENCODE_CONFIG_FILE="${OPENCODE_CONFIG_FILE:-${OPENCODE_CONFIG_DIR}/opencode.json}"
 
-MICROCO_PM_CONFIG=$(cat << 'EOF'
+MICROCO_AGENTS_CONFIG=$(cat << 'EOF'
 {
   "agent": {
     "microco-pm": {
       "mode": "primary",
+      "prompt": "{file:~/.config/opencode/agents/microco-pm.md}",
       "permission": {
         "task": {
           "microco-coder": "allow",
@@ -82,6 +84,30 @@ MICROCO_PM_CONFIG=$(cat << 'EOF'
           "microco-reviewer": "allow"
         }
       }
+    },
+    "microco-planner": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-planner.md}"
+    },
+    "microco-architect": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-architect.md}"
+    },
+    "microco-coder": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-coder.md}"
+    },
+    "microco-ops": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-ops.md}"
+    },
+    "microco-qa": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-qa.md}"
+    },
+    "microco-reviewer": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-reviewer.md}"
     }
   }
 }
@@ -93,12 +119,12 @@ if [[ -f "$OPENCODE_CONFIG_FILE" ]]; then
     cp "$OPENCODE_CONFIG_FILE" "$backup_file"
     echo "  [INFO] Backed up to ${backup_file}"
 
-    "$JQ" -s '.[0] * .[1]' "$OPENCODE_CONFIG_FILE" <<< "$MICROCO_PM_CONFIG" > "${OPENCODE_CONFIG_FILE}.tmp"
+    "$JQ" -s '.[0] * (.[1] | if . == null then {} else . end)' "$OPENCODE_CONFIG_FILE" <<< "$MICROCO_AGENTS_CONFIG" > "${OPENCODE_CONFIG_FILE}.tmp"
     mv "${OPENCODE_CONFIG_FILE}.tmp" "$OPENCODE_CONFIG_FILE"
-    echo "  [OK] Merged microco-pm config into ${OPENCODE_CONFIG_FILE}"
+    echo "  [OK] Merged microco agents config into ${OPENCODE_CONFIG_FILE}"
 else
     mkdir -p "$(dirname "$OPENCODE_CONFIG_FILE")"
-    echo "$MICROCO_PM_CONFIG" > "$OPENCODE_CONFIG_FILE"
+    echo "$MICROCO_AGENTS_CONFIG" > "$OPENCODE_CONFIG_FILE"
     echo "  [OK] Created ${OPENCODE_CONFIG_FILE}"
 fi
 
@@ -135,6 +161,10 @@ cat << 'EOF'
     "microco-qa": {
       "mode": "subagent",
       "prompt": "{file:~/.config/opencode/agents/microco-qa.md}"
+    },
+    "microco-reviewer": {
+      "mode": "subagent",
+      "prompt": "{file:~/.config/opencode/agents/microco-reviewer.md}"
     }
   }
 }
